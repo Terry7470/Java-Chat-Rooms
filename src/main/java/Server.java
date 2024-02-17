@@ -16,7 +16,6 @@ public class Server {
             ClientHandler clientHandler = new ClientHandler(socket);
             Thread thread = new Thread(clientHandler);
             thread.start();
-            System.out.println("A new member has joined this ChatRoom");
         }
     }
 
@@ -43,19 +42,20 @@ class ClientHandler implements Runnable {
     }
 
     public void run() {
+        System.out.println("A new member has joined this ChatRoom");
         String messageFromClient;
         while(socket.isConnected()){
             try {
                 messageFromClient = bufferedReader.readLine();
+                BroadcastMessages(messageFromClient);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-            BroadcastMessages(messageFromClient);
         }
     }
 
     public void BroadcastMessages(String messageToSend) {
-
+        System.out.println(messageToSend);
     }
 
 }
