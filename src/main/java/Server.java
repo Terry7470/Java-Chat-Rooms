@@ -19,11 +19,15 @@ public class Server {
         }
     }
 
+    public void closeServer() throws IOException {
+        serverSocket.close();
+    }
     public static void main(String[] args) throws IOException {
         ServerSocket serverSocket = new ServerSocket(1004);
         Server server = new Server(serverSocket);
         server.startServer();
         System.out.println("The Server is running");
+        server.closeServer();
     }
 
 }
