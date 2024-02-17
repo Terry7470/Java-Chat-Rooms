@@ -1,10 +1,10 @@
-import java.net.ServerSocket;
-import java.net.Socket;
+import java.net.*;
 import java.util.*;
 import java.io.*;
 
 public class Server {
     private ServerSocket serverSocket;
+
     public Server(ServerSocket serverSocket) {
         this.serverSocket = serverSocket;
     }
