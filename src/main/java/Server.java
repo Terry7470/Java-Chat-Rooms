@@ -25,8 +25,8 @@ public class Server {
     public static void main(String[] args) throws IOException {
         ServerSocket serverSocket = new ServerSocket(1004);
         Server server = new Server(serverSocket);
-        server.startServer();
         System.out.println("The Server is running");
+        server.startServer();
         server.closeServer();
     }
 
@@ -41,12 +41,14 @@ class ClientHandler implements Runnable {
 
     public ClientHandler(Socket socket) throws IOException {
         this.socket = socket;
+        this.bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         this.clientUsername = bufferedReader.readLine();
         clientHandlers.add(this);
+        BroadcastMessages(clientUsername + "has joined the chat");
     }
 
     public void run() {
-        System.out.println("A new member has joined this ChatRoom");
+        System.out.println("A new member named" + clientUsername + "has joined this ChatRoom");
         String messageFromClient;
         while(socket.isConnected()){
             try {
