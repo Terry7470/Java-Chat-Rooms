@@ -46,6 +46,7 @@ public class Client implements Runnable {
                 socket.close();
                 bufferedWriter.close();
                 bufferedReader.close();
+                bufferedReaderFromTerminal.close();
             } catch (IOException ex) {
                 throw new RuntimeException(ex);
             }
