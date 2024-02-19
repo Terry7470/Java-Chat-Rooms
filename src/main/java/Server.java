@@ -64,7 +64,7 @@ class ClientHandler implements Runnable {
         bufferedWriter.flush();
         this.clientUsername = bufferedReader.readLine();
         clientHandlers.add(this);
-        BroadcastMessages("Server: " + clientUsername + "has joined the chat");
+        BroadcastMessages("Server: " + clientUsername + " has joined the chat");
         System.out.println("A new member named " + clientUsername + " has joined this ChatRoom");
     }
 
@@ -83,10 +83,11 @@ class ClientHandler implements Runnable {
     }
 
     public void BroadcastMessages(String messageToSend) throws IOException {
-        for(int i = 0; i < clientHandlers.size(); i++) {
-            if(socket.isConnected()) {
-                clientHandlers.get(i).bufferedWriter.write(clientUsername + ": " + messageToSend);
-                clientHandlers.get(i).bufferedWriter.newLine();
+        for(ClientHandler clientHandler : clientHandlers) {
+            if(clientHandler.socket.isConnected()) {
+                clientHandler.bufferedWriter.write(clientUsername + ": " + messageToSend);
+                clientHandler.bufferedWriter.newLine();
+                clientHandler.bufferedWriter.flush();
             }
         }
     }

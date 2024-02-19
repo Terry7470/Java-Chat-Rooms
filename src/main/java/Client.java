@@ -7,12 +7,14 @@ public class Client implements Runnable {
     private BufferedReader bufferedReaderFromTerminal;
     private BufferedWriter bufferedWriter;
     private String username;
+    private int numbers;
 
     public Client(Socket socket) throws IOException {
         this.socket = socket;
         this.bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         this.bufferedReaderFromTerminal = new BufferedReader(new InputStreamReader(System.in));
         this.bufferedWriter = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+        this.numbers = 0;
     }
 
     public void sendMessages() throws IOException {
@@ -20,8 +22,13 @@ public class Client implements Runnable {
         while (socket.isConnected()) {
             messageToSend = bufferedReaderFromTerminal.readLine();
             if (!messageToSend.equals("close")) {
+                numbers++;
+                if (numbers == 1) {
+                    username = messageToSend;
+                }
                 bufferedWriter.write(messageToSend);
                 bufferedWriter.newLine();
+                bufferedWriter.flush();
             } else {
                 close();
             }
@@ -50,7 +57,6 @@ public class Client implements Runnable {
         Client client = new Client(socket);
         Thread listenForMessage = new Thread(client);
         listenForMessage.start();
-        System.out.println("start listen");
         client.sendMessages();
     }
 }
