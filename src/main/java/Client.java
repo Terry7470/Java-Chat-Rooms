@@ -8,10 +8,8 @@ public class Client implements Runnable {
     private BufferedWriter bufferedWriter;
     private String username;
     private int numbers;
-    private boolean clientIsOpen;
 
     public Client(Socket socket) throws IOException {
-        this.clientIsOpen = true;
         this.socket = socket;
         this.bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         this.bufferedReaderFromTerminal = new BufferedReader(new InputStreamReader(System.in));
@@ -21,9 +19,9 @@ public class Client implements Runnable {
 
     public void sendMessages() throws IOException {
         String messageToSend;
-        while (clientIsOpen) {
+        while (socket.isConnected()) {
             messageToSend = bufferedReaderFromTerminal.readLine();
-            if (!messageToSend.equals("close")) {
+            if (!messageToSend.equals("!close")) {
                 numbers++;
                 if (numbers == 0) {
                     username = messageToSend;
@@ -32,7 +30,6 @@ public class Client implements Runnable {
                 bufferedWriter.newLine();
                 bufferedWriter.flush();
             } else {
-                clientIsOpen = false;
                 close();
                 break;
             }
@@ -41,7 +38,7 @@ public class Client implements Runnable {
 
     public void run() {
         try {
-            while(clientIsOpen) {
+            while(socket.isConnected()) {
                 System.out.println(bufferedReader.readLine());
             }
         } catch (IOException e) {
