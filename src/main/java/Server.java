@@ -58,13 +58,13 @@ class ClientHandler implements Runnable {
         bufferedWriter.write("Your username: ");
         this.clientUsername = bufferedReader.readLine();
         clientHandlers.add(this);
-        BroadcastMessages(clientUsername + "has joined the chat");
+        BroadcastMessages("Server: " + clientUsername + "has joined the chat");
         System.out.println("A new member named" + clientUsername + "has joined this ChatRoom");
     }
 
     public void run() {
         String messageFromClient;
-        while(socket.isConnected()){
+        while(socket.isConnected()) {
             try {
                 messageFromClient = bufferedReader.readLine();
                 BroadcastMessages(messageFromClient);
@@ -75,7 +75,11 @@ class ClientHandler implements Runnable {
     }
 
     public void BroadcastMessages(String messageToSend) throws IOException {
-        bufferedWriter.write(messageToSend);
+        for(int i = 0; i < clientHandlers.size(); i++) {
+            if(socket.isConnected()) {
+                clientHandlers.get(i).bufferedWriter.write(clientUsername + ": " + messageToSend);
+            }
+        }
     }
 
 }
