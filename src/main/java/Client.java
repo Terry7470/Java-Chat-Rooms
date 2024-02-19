@@ -8,47 +8,57 @@ public class Client implements Runnable {
     private BufferedWriter bufferedWriter;
     private String username;
     private int numbers;
+    private boolean clientIsOpen;
 
     public Client(Socket socket) throws IOException {
+        this.clientIsOpen = true;
         this.socket = socket;
         this.bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         this.bufferedReaderFromTerminal = new BufferedReader(new InputStreamReader(System.in));
         this.bufferedWriter = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
-        this.numbers = 0;
+        this.numbers = -1;
     }
 
     public void sendMessages() throws IOException {
         String messageToSend;
-        while (socket.isConnected()) {
+        while (clientIsOpen) {
             messageToSend = bufferedReaderFromTerminal.readLine();
             if (!messageToSend.equals("close")) {
                 numbers++;
-                if (numbers == 1) {
+                if (numbers == 0) {
                     username = messageToSend;
                 }
                 bufferedWriter.write(messageToSend);
                 bufferedWriter.newLine();
                 bufferedWriter.flush();
             } else {
+                clientIsOpen = false;
                 close();
+                break;
             }
         }
     }
 
     public void run() {
         try {
-            while(socket.isConnected()) {
+            while(clientIsOpen) {
                 System.out.println(bufferedReader.readLine());
             }
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            try {
+                socket.close();
+                bufferedWriter.close();
+                bufferedReader.close();
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
         }
     }
 
     public void close() throws IOException {
+        bufferedReaderFromTerminal.close();
         bufferedWriter.close();
         bufferedReader.close();
-        bufferedReaderFromTerminal.close();
         socket.close();
     }
 

@@ -26,9 +26,8 @@ public class Server implements Runnable{
     }
 
     public void closeServer() throws IOException {
-        for(int numOfClient = 0; numOfClient < ClientHandler.clientHandlers.size(); numOfClient++) {
-            ClientHandler.clientHandlers.get(numOfClient).BroadcastMessages("Server is closing");
-            ClientHandler.clientHandlers.get(numOfClient).close();
+        for(ClientHandler clientHandler : ClientHandler.clientHandlers) {
+            clientHandler.sendMessages("Server is shutting down");
         }
         serverSocket.close();
     }
@@ -92,16 +91,10 @@ class ClientHandler implements Runnable {
         }
     }
 
-    public void close() throws IOException {
-        for(int i = 0; i < clientHandlers.size(); i++) {
-            if(socket.isConnected()) {
-                System.out.println("clientHandler is shutting");
-                socket.close();
-                bufferedWriter.close();
-                bufferedReader.close();
-                System.out.println("finish");
-            }
-        }
+    public void sendMessages(String messageToSend) throws IOException {
+        bufferedWriter.write(messageToSend);
+        bufferedWriter.newLine();
+        bufferedWriter.flush();
     }
 
 }
