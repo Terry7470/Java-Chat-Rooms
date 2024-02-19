@@ -84,7 +84,7 @@ class ClientHandler implements Runnable {
 
     public void BroadcastMessages(String messageToSend) throws IOException {
         for(ClientHandler clientHandler : clientHandlers) {
-            if(clientHandler.socket.isConnected()) {
+            if(clientHandler.socket.isConnected() && clientHandler.clientUsername != clientUsername) {
                 clientHandler.bufferedWriter.write(clientUsername + ": " + messageToSend);
                 clientHandler.bufferedWriter.newLine();
                 clientHandler.bufferedWriter.flush();
