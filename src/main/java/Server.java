@@ -3,31 +3,43 @@ import java.util.*;
 import java.io.*;
 
 //This class is made for start, create thread and close server.
-public class Server {
+public class Server implements Runnable{
     private ServerSocket serverSocket;
+    private static BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(System.in));
 
     public Server(ServerSocket serverSocket) {
         this.serverSocket = serverSocket;
     }
 
-    public void startServer() throws IOException {
-        while(!serverSocket.isClosed()) {
-            Socket socket = serverSocket.accept();
-            ClientHandler clientHandler = new ClientHandler(socket);
-            Thread thread = new Thread(clientHandler);
-            thread.start();
+    public void run() {
+        try {
+            while(!serverSocket.isClosed()) {
+                Socket socket = serverSocket.accept();
+                ClientHandler clientHandler = new ClientHandler(socket);
+                Thread thread = new Thread(clientHandler);
+                thread.start();
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
+
     }
 
     public void closeServer() throws IOException {
+        for(int numOfClient = 0; numOfClient < ClientHandler.clientHandlers.size(); numOfClient++) {
+            ClientHandler.clientHandlers.get(numOfClient).BroadcastMessages("Server is closing");
+        }
         serverSocket.close();
     }
     public static void main(String[] args) throws IOException {
         ServerSocket serverSocket = new ServerSocket(1004);
         Server server = new Server(serverSocket);
         System.out.println("The Server is running");
-        server.startServer();
-        server.closeServer();
+        Thread startServer = new Thread(server);
+        startServer.start();
+        if(bufferedReader.readLine().equals("close")){
+            server.closeServer();
+        }
     }
 
 }
@@ -42,13 +54,15 @@ class ClientHandler implements Runnable {
     public ClientHandler(Socket socket) throws IOException {
         this.socket = socket;
         this.bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        this.bufferedWriter = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+        bufferedWriter.write("Your username: ");
         this.clientUsername = bufferedReader.readLine();
         clientHandlers.add(this);
         BroadcastMessages(clientUsername + "has joined the chat");
+        System.out.println("A new member named" + clientUsername + "has joined this ChatRoom");
     }
 
     public void run() {
-        System.out.println("A new member named" + clientUsername + "has joined this ChatRoom");
         String messageFromClient;
         while(socket.isConnected()){
             try {
@@ -60,8 +74,8 @@ class ClientHandler implements Runnable {
         }
     }
 
-    public void BroadcastMessages(String messageToSend) {
-        System.out.println(messageToSend);
+    public void BroadcastMessages(String messageToSend) throws IOException {
+        bufferedWriter.write(messageToSend);
     }
 
 }
