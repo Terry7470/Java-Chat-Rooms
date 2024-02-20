@@ -38,8 +38,12 @@ public class Client implements Runnable {
 
     public void run() {
         try {
+            String messageReceived;
             while(socket.isConnected()) {
-                System.out.println(bufferedReader.readLine());
+                messageReceived = bufferedReader.readLine();
+                if(messageReceived != null) {
+                    System.out.println(messageReceived);
+                }
             }
         } catch (IOException e) {
             try {
@@ -48,7 +52,12 @@ public class Client implements Runnable {
                 bufferedReader.close();
                 bufferedReaderFromTerminal.close();
             } catch (IOException ex) {
-                throw new RuntimeException(ex);
+                try {
+                    System.out.println("disconnected");
+                    close();
+                } catch (IOException exc) {
+                    throw new RuntimeException(exc);
+                }
             }
         }
     }
@@ -60,11 +69,18 @@ public class Client implements Runnable {
         socket.close();
     }
 
-    public static void main(String[] args) throws Exception {
-        Socket socket = new Socket("localhost", 1004);
-        Client client = new Client(socket);
-        Thread listenForMessage = new Thread(client);
-        listenForMessage.start();
-        client.sendMessages();
+    public static void main(String[] args) {
+        try {
+            Socket socket = new Socket("localhost", 1004);
+            Client client = new Client(socket);
+            Thread listenForMessage = new Thread(client);
+            listenForMessage.start();
+            client.sendMessages();
+        } catch (UnknownHostException e) {
+            System.out.println("Wrong IP");
+        } catch (IOException e) {
+            System.out.println("Internet error or server closed");
+        }
+
     }
 }
