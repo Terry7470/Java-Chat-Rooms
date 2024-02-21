@@ -17,23 +17,29 @@ public class Client implements Runnable {
         this.numbers = -1;
     }
 
-    public void sendMessages() throws IOException {
-        String messageToSend;
-        while (socket.isConnected()) {
-            messageToSend = bufferedReaderFromTerminal.readLine();
-            if (!messageToSend.equals("!close")) {
-                numbers++;
-                if (numbers == 0) {
-                    username = messageToSend;
+    public void sendMessages() {
+
+            String messageToSend;
+            while (socket.isConnected()) {
+                try {
+                    messageToSend = bufferedReaderFromTerminal.readLine();
+                    if (!messageToSend.equals("!close")) {
+                        numbers++;
+                        if (numbers == 0) {
+                            this.username = messageToSend;
+                        }
+                        bufferedWriter.write(messageToSend);
+                        bufferedWriter.newLine();
+                        bufferedWriter.flush();
+                    } else {
+                        close();
+                        break;
+                    }
+                } catch (IOException e) {
+                    System.out.println("Internet error");
                 }
-                bufferedWriter.write(messageToSend);
-                bufferedWriter.newLine();
-                bufferedWriter.flush();
-            } else {
-                close();
-                break;
             }
-        }
+
     }
 
     public void run() {

@@ -13,19 +13,14 @@ public class Server implements Runnable {
     }
 
     public void run() {
-        try {
-            while(serverStart) {
+        while(serverStart) {
+            try {
                 Socket socket = serverSocket.accept();
                 ClientHandler clientHandler = new ClientHandler(socket);
                 Thread thread = new Thread(clientHandler);
                 thread.start();
-            }
-        } catch (IOException e) {
-            try {
-                serverSocket.close();
-                bufferedReader.close();
-            } catch (IOException ex) {
-                throw new RuntimeException(ex);
+            } catch (IOException e) {
+                System.out.println("fail to connect to the client");
             }
         }
     }
@@ -33,11 +28,11 @@ public class Server implements Runnable {
     public void tellCloseServer() {
         for(ClientHandler clientHandler : ClientHandler.clientHandlers) {
             try {
-                if (clientHandler.socketIsRunning()){
+                if (clientHandler.socketIsConnected()){
                     clientHandler.sendMessages("Server is shutting down");
                 }
             } catch (IOException e) {
-                    throw new RuntimeException(e);
+                System.out.println(clientHandler.getUserName() + " has disconnected");
             }
         }
     }
@@ -49,7 +44,7 @@ public class Server implements Runnable {
         Thread startServer = new Thread(server);
         startServer.start();
         while(true){
-            if(bufferedReader.readLine().equals("close")){
+            if(bufferedReader.readLine().equals("!close")){
                 System.out.println("The Server is shutting down");
                 server.serverStart = false;
                 server.tellCloseServer();
@@ -89,13 +84,16 @@ class ClientHandler implements Runnable {
             if (isRunning) {
                 this.clientUsername = bufferedReader.readLine();
             }
-            broadcastMessages("Server: " + clientUsername + " has joined the chat");
-            System.out.println("A new member named " + clientUsername + " has joined this ChatRoom");
+            if(clientUsername != null) {
+                broadcastMessages("Server: " + clientUsername + " has joined the chat");
+                System.out.println("A new member named " + clientUsername + " has joined this ChatRoom");
+            }
+
             String messageFromClient;
             while (isRunning) {
                 messageFromClient = bufferedReader.readLine();
                 if (messageFromClient != null) {
-                    broadcastMessages(messageFromClient);
+                    broadcastMessages(clientUsername + ": " + messageFromClient);
                 }
             }
         } catch (IOException e) {
@@ -111,8 +109,8 @@ class ClientHandler implements Runnable {
 
     public void broadcastMessages(String messageToSend) throws IOException {
         for(ClientHandler clientHandler : clientHandlers) {
-            if(clientHandler.socket.isConnected() && clientHandler.clientUsername != clientUsername) {
-                clientHandler.bufferedWriter.write(clientUsername + ": " + messageToSend);
+            if(clientHandler.socket.isConnected() && clientHandler.clientUsername != clientUsername && clientHandler.clientUsername != null) {
+                clientHandler.bufferedWriter.write(messageToSend);
                 clientHandler.bufferedWriter.newLine();
                 clientHandler.bufferedWriter.flush();
             }
@@ -136,7 +134,7 @@ class ClientHandler implements Runnable {
         return clientUsername;
     }
 
-    public boolean socketIsRunning() {
+    public boolean socketIsConnected() {
         return socket.isConnected();
     }
 }
