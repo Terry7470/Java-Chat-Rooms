@@ -1,6 +1,8 @@
 import java.net.*;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.io.*;
+import java.time.*;
 
 //This class is made for start, create thread and close server.
 public class Server implements Runnable {
@@ -67,6 +69,8 @@ class ClientHandler implements Runnable {
     private BufferedReader bufferedReader;
     private BufferedWriter bufferedWriter;
     private boolean isRunning;
+    private int theNumberORM;
+
 
     public ClientHandler(Socket socket) throws IOException {
         this.isRunning =  true;
@@ -74,6 +78,7 @@ class ClientHandler implements Runnable {
         this.bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         this.bufferedWriter = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
         clientHandlers.add(this);
+        this.theNumberORM = 0;
     }
 
     public void run() {
@@ -85,7 +90,7 @@ class ClientHandler implements Runnable {
                 this.clientUsername = bufferedReader.readLine();
             }
             if(clientUsername != null) {
-                broadcastMessages("Server: " + clientUsername + " has joined the chat");
+                broadcastMessages("Server: " + clientUsername + " has entered the chat      " + getTime());
                 System.out.println("A new member named " + clientUsername + " has joined this ChatRoom");
             }
 
@@ -93,7 +98,8 @@ class ClientHandler implements Runnable {
             while (isRunning) {
                 messageFromClient = bufferedReader.readLine();
                 if (messageFromClient != null) {
-                    broadcastMessages(clientUsername + ": " + messageFromClient);
+                    theNumberORM++;
+                    broadcastMessages(clientUsername + ": " + messageFromClient + "      " +  getTime() + "  " + theNumberORM + " message(s)");
                 }
             }
         } catch (IOException e) {
@@ -137,4 +143,12 @@ class ClientHandler implements Runnable {
     public boolean socketIsConnected() {
         return socket.isConnected();
     }
+
+    private String getTime() {
+        LocalDateTime currentTime = LocalDateTime.now();
+        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("MM-dd-yyyy HH:mm:ss");
+        String theTime = currentTime.format(dateTimeFormatter);
+        return theTime;
+    }
+
 }
