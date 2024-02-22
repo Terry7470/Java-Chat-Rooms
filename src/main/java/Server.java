@@ -67,7 +67,9 @@ class ClientHandler implements Runnable {
     private Socket socket;
     private String clientUsername;
     private BufferedReader bufferedReader;
+    private BufferedReader readTxt;
     private BufferedWriter bufferedWriter;
+    private BufferedWriter intoTxt;
     private boolean isRunning;
     private int theNumberORM;
     private BufferedWriter intoTxt;
@@ -77,6 +79,7 @@ class ClientHandler implements Runnable {
         this.isRunning =  true;
         this.socket = socket;
         this.bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        this.readTxt = new BufferedReader(new FileReader("/Users/TerryLi/Desktop/messagesRecord"));
         this.bufferedWriter = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
         this.intoTxt = new BufferedWriter(new FileWriter("/Users/TerryLi/Desktop/messagesRecord"));
         clientHandlers.add(this);
@@ -99,9 +102,17 @@ class ClientHandler implements Runnable {
             String messageFromClient;
             while (isRunning) {
                 messageFromClient = bufferedReader.readLine();
-                if (messageFromClient != null) {
+                if (messageFromClient != null && !messageFromClient.substring(0, 8).equals("#search ")) {
                     theNumberORM++;
                     broadcastMessages(clientUsername + ": " + messageFromClient + "      " +  getTime() + "  " + theNumberORM + " message(s)");
+                } else if(messageFromClient.substring(0, 8).equals("#search ")) {
+                    String keyword = messageFromClient.substring(8, messageFromClient.length());
+                    String line;
+                    while((line = readTxt.readLine()) != null) {
+                        if (line.contains(keyword)){
+                            System.out.println(line);
+                        }
+                    }
                 }
             }
         } catch (IOException e) {
