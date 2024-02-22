@@ -70,6 +70,7 @@ class ClientHandler implements Runnable {
     private BufferedWriter bufferedWriter;
     private boolean isRunning;
     private int theNumberORM;
+    private BufferedWriter intoTxt;
 
 
     public ClientHandler(Socket socket) throws IOException {
@@ -77,6 +78,7 @@ class ClientHandler implements Runnable {
         this.socket = socket;
         this.bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         this.bufferedWriter = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+        this.intoTxt = new BufferedWriter(new FileWriter("/Users/TerryLi/Desktop/messagesRecord"));
         clientHandlers.add(this);
         this.theNumberORM = 0;
     }
@@ -119,9 +121,13 @@ class ClientHandler implements Runnable {
                 clientHandler.bufferedWriter.write(messageToSend);
                 clientHandler.bufferedWriter.newLine();
                 clientHandler.bufferedWriter.flush();
+                clientHandler.intoTxt.write(messageToSend);
+                clientHandler.intoTxt.newLine();
+                clientHandler.intoTxt.flush();
             }
         }
     }
+
 
     public void sendMessages(String messageToSend) throws IOException {
         bufferedWriter.write(messageToSend);
