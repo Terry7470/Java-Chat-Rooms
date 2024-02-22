@@ -22,7 +22,9 @@ public class Server implements Runnable {
                 Thread thread = new Thread(clientHandler);
                 thread.start();
             } catch (IOException e) {
-                System.out.println("fail to connect to the client");
+                if (serverStart){
+                    System.out.println("fail to connect to the client");
+                }
             }
         }
     }
@@ -67,21 +69,28 @@ class ClientHandler implements Runnable {
     private Socket socket;
     private String clientUsername;
     private BufferedReader bufferedReader;
-    private BufferedReader readTxt;
+    private static BufferedReader readTxt;
     private BufferedWriter bufferedWriter;
-    private BufferedWriter intoTxt;
+    private static BufferedWriter intoTxt;
+
+    static {
+        try {
+            intoTxt = new BufferedWriter(new FileWriter("/Users/TerryLi/Desktop/messagesRecord"));
+            readTxt = new BufferedReader(new FileReader("/Users/TerryLi/Desktop/messagesRecord"));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     private boolean isRunning;
     private int theNumberORM;
-    private BufferedWriter intoTxt;
 
 
     public ClientHandler(Socket socket) throws IOException {
         this.isRunning =  true;
         this.socket = socket;
         this.bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-        this.readTxt = new BufferedReader(new FileReader("/Users/TerryLi/Desktop/messagesRecord"));
         this.bufferedWriter = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
-        this.intoTxt = new BufferedWriter(new FileWriter("/Users/TerryLi/Desktop/messagesRecord"));
         clientHandlers.add(this);
         this.theNumberORM = 0;
     }
@@ -91,9 +100,7 @@ class ClientHandler implements Runnable {
             bufferedWriter.write("Your username: ");
             bufferedWriter.newLine();
             bufferedWriter.flush();
-            if (isRunning) {
-                this.clientUsername = bufferedReader.readLine();
-            }
+            this.clientUsername = bufferedReader.readLine();
             if(clientUsername != null) {
                 broadcastMessages("Server: " + clientUsername + " has entered the chat      " + getTime());
                 System.out.println("A new member named " + clientUsername + " has joined this ChatRoom");
@@ -102,17 +109,37 @@ class ClientHandler implements Runnable {
             String messageFromClient;
             while (isRunning) {
                 messageFromClient = bufferedReader.readLine();
-                if (messageFromClient != null && !messageFromClient.substring(0, 8).equals("#search ")) {
+                if (messageFromClient != null && messageFromClient.length() < 9) {
                     theNumberORM++;
                     broadcastMessages(clientUsername + ": " + messageFromClient + "      " +  getTime() + "  " + theNumberORM + " message(s)");
-                } else if(messageFromClient.substring(0, 8).equals("#search ")) {
+                    writeRecord(clientUsername + ": " + messageFromClient + "      " +  getTime() + "  " + theNumberORM + " message(s)");
+                } else if(messageFromClient != null && messageFromClient.substring(0, 8).equals("#search ")) {
                     String keyword = messageFromClient.substring(8, messageFromClient.length());
                     String line;
-                    while((line = readTxt.readLine()) != null) {
-                        if (line.contains(keyword)){
-                            System.out.println(line);
+                    String keyOfLine;
+                    boolean haveKeyword = false;
+                    while(true) {
+                        line = readTxt.readLine();
+                        if (line == null) break;
+                        keyOfLine = line.substring(9, line.length()-33);
+                        if (keyOfLine.contains(keyword)){
+                            bufferedWriter.write(line);
+                            bufferedWriter.newLine();
+                            bufferedWriter.flush();
+                            haveKeyword = true;
                         }
                     }
+                    if (!haveKeyword) {
+                        bufferedWriter.write("No relevant statements");
+                        bufferedWriter.newLine();
+                        bufferedWriter.flush();
+                    }
+                    readTxt.close();
+                    readTxt = new BufferedReader(new FileReader("/Users/TerryLi/Desktop/messagesRecord"));
+                } else if (messageFromClient != null) {
+                    theNumberORM++;
+                    broadcastMessages(clientUsername + ": " + messageFromClient + "      " +  getTime() + "  " + theNumberORM + " message(s)");
+                    writeRecord(clientUsername + ": " + messageFromClient + "      " +  getTime() + "  " + theNumberORM + " message(s)");
                 }
             }
         } catch (IOException e) {
@@ -132,13 +159,15 @@ class ClientHandler implements Runnable {
                 clientHandler.bufferedWriter.write(messageToSend);
                 clientHandler.bufferedWriter.newLine();
                 clientHandler.bufferedWriter.flush();
-                clientHandler.intoTxt.write(messageToSend);
-                clientHandler.intoTxt.newLine();
-                clientHandler.intoTxt.flush();
             }
         }
     }
 
+    public void writeRecord(String messageToSend) throws IOException {
+        intoTxt.write("History: " + messageToSend);
+        intoTxt.newLine();
+        intoTxt.flush();
+    }
 
     public void sendMessages(String messageToSend) throws IOException {
         bufferedWriter.write(messageToSend);
@@ -151,6 +180,8 @@ class ClientHandler implements Runnable {
         socket.close();
         bufferedWriter.close();
         bufferedReader.close();
+        intoTxt.close();
+        readTxt.close();
     }
 
     public String getUserName() {
