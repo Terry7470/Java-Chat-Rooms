@@ -109,11 +109,14 @@ class ClientHandler implements Runnable {
             String messageFromClient;
             while (isRunning) {
                 messageFromClient = bufferedReader.readLine();
-                if (messageFromClient != null && messageFromClient.length() < 9) {
+                if (messageFromClient == null || messageFromClient.isEmpty() || messageFromClient.isBlank()) continue;
+                if (messageFromClient.length() < 9) {
                     theNumberORM++;
                     broadcastMessages(clientUsername + ": " + messageFromClient + "      " +  getTime() + "  " + theNumberORM + " message(s)");
                     writeRecord(clientUsername + ": " + messageFromClient + "      " +  getTime() + "  " + theNumberORM + " message(s)");
-                } else if(messageFromClient != null && messageFromClient.substring(0, 8).equals("#search ")) {
+                    continue;
+                }
+                if(messageFromClient.substring(0, 8).equals("#search ")) {
                     String keyword = messageFromClient.substring(8, messageFromClient.length());
                     String line;
                     String keyOfLine;
@@ -136,11 +139,11 @@ class ClientHandler implements Runnable {
                     }
                     readTxt.close();
                     readTxt = new BufferedReader(new FileReader("/Users/TerryLi/Desktop/messagesRecord"));
-                } else if (messageFromClient != null) {
-                    theNumberORM++;
-                    broadcastMessages(clientUsername + ": " + messageFromClient + "      " +  getTime() + "  " + theNumberORM + " message(s)");
-                    writeRecord(clientUsername + ": " + messageFromClient + "      " +  getTime() + "  " + theNumberORM + " message(s)");
+                    continue;
                 }
+                theNumberORM++;
+                broadcastMessages(clientUsername + ": " + messageFromClient + "      " +  getTime() + "  " + theNumberORM + " message(s)");
+                writeRecord(clientUsername + ": " + messageFromClient + "      " +  getTime() + "  " + theNumberORM + " message(s)");
             }
         } catch (IOException e) {
             try {
