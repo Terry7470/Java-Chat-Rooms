@@ -8,12 +8,13 @@ import java.time.*;
 public class Server implements Runnable {
     private ServerSocket serverSocket;
     private static BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(System.in));
+    //This is a variable describing the state of the server being open.
     private boolean serverStart = true;
-
+    //The constructor of the Server class.
     public Server(ServerSocket serverSocket) {
         this.serverSocket = serverSocket;
     }
-
+    //The server thread responsible for spawning new Client Handler threads.
     public void run() {
         while(serverStart) {
             try {
@@ -28,7 +29,7 @@ public class Server implements Runnable {
             }
         }
     }
-
+    //A function for indicating that the client-server is in the process of shutting down.
     public void tellCloseServer() {
         for(ClientHandler clientHandler : ClientHandler.clientHandlers) {
             try {
@@ -42,9 +43,11 @@ public class Server implements Runnable {
     }
 
     public static void main(String[] args) throws IOException {
+        //Accepts socket requests on the default IP and port 1004.
         ServerSocket serverSocket = new ServerSocket(1004);
         Server server = new Server(serverSocket);
         System.out.println("The Server is running");
+        //Runs the content of the `run` function as a separate thread.
         Thread startServer = new Thread(server);
         startServer.start();
         while(true){
@@ -63,16 +66,19 @@ public class Server implements Runnable {
     }
 
 }
-
+//A class used to control the client.
 class ClientHandler implements Runnable {
+    //A dynamic array used to store client handlers.
     public static ArrayList<ClientHandler> clientHandlers = new ArrayList<>();
     private Socket socket;
     private String clientUsername;
     private BufferedReader bufferedReader;
+    //Read content from a local file.
     private static BufferedReader readTxt;
     private BufferedWriter bufferedWriter;
+    //Write the chat records to a local file.
     private static BufferedWriter intoTxt;
-
+    //Specify the local file.
     static {
         try {
             intoTxt = new BufferedWriter(new FileWriter("/Users/TerryLi/Desktop/messagesRecord"));
@@ -81,11 +87,11 @@ class ClientHandler implements Runnable {
             throw new RuntimeException(e);
         }
     }
-
+    //Variable indicating whether the client handler is running.
     private boolean isRunning;
     private int theNumberORM;
 
-
+//    Constructor: includes reading, sending, and counting.
     public ClientHandler(Socket socket) throws IOException {
         this.isRunning =  true;
         this.socket = socket;
@@ -94,18 +100,19 @@ class ClientHandler implements Runnable {
         clientHandlers.add(this);
         this.theNumberORM = 0;
     }
-
+    //Independent thread section, including processing content received from clients.
     public void run() {
         try {
             bufferedWriter.write("Your username: ");
             bufferedWriter.newLine();
             bufferedWriter.flush();
             this.clientUsername = bufferedReader.readLine();
+            //Ensure the validity of the content.
             if(clientUsername != null) {
                 broadcastMessages("Server: " + clientUsername + " has entered the chat      " + getTime());
                 System.out.println("A new member named " + clientUsername + " has joined this ChatRoom");
             }
-
+            //Process different keywords separately.
             String messageFromClient;
             while (isRunning) {
                 messageFromClient = bufferedReader.readLine();
@@ -137,11 +144,13 @@ class ClientHandler implements Runnable {
                         bufferedWriter.newLine();
                         bufferedWriter.flush();
                     }
+                    //Reset the file read pointer to the beginning.
                     readTxt.close();
                     readTxt = new BufferedReader(new FileReader("/Users/TerryLi/Desktop/messagesRecord"));
                     continue;
                 }
                 theNumberORM++;
+                //Broadcast the received chat messages.
                 broadcastMessages(clientUsername + ": " + messageFromClient + "      " +  getTime() + "  " + theNumberORM + " message(s)");
                 writeRecord(clientUsername + ": " + messageFromClient + "      " +  getTime() + "  " + theNumberORM + " message(s)");
             }
@@ -155,7 +164,7 @@ class ClientHandler implements Runnable {
             }
         }
     }
-
+    //Function to broadcast messages, excluding the sender.
     public void broadcastMessages(String messageToSend) throws IOException {
         for(ClientHandler clientHandler : clientHandlers) {
             if(clientHandler.socket.isConnected() && clientHandler.clientUsername != clientUsername && clientHandler.clientUsername != null) {
@@ -165,19 +174,19 @@ class ClientHandler implements Runnable {
             }
         }
     }
-
+    //Function to record messages locally.
     public void writeRecord(String messageToSend) throws IOException {
         intoTxt.write("History: " + messageToSend);
         intoTxt.newLine();
         intoTxt.flush();
     }
-
+    //Function to send messages to the current instance.
     public void sendMessages(String messageToSend) throws IOException {
         bufferedWriter.write(messageToSend);
         bufferedWriter.newLine();
         bufferedWriter.flush();
     }
-
+    //Function to close the server.
     public void close() throws IOException {
         this.isRunning = false;
         socket.close();
@@ -186,15 +195,15 @@ class ClientHandler implements Runnable {
         intoTxt.close();
         readTxt.close();
     }
-
+    //Function to retrieve the username corresponding to the instance's client.
     public String getUserName() {
         return clientUsername;
     }
-
+    //Code to determine if the client is still connected.
     public boolean socketIsConnected() {
         return socket.isConnected();
     }
-
+    //A function to get the current time.
     private String getTime() {
         LocalDateTime currentTime = LocalDateTime.now();
         DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("MM-dd-yyyy HH:mm:ss");
