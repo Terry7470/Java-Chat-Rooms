@@ -1,6 +1,6 @@
 import java.io.*;
 import java.net.*;
-
+//The client class implementing sending, receiving, and control.
 public class Client implements Runnable {
     private Socket socket;
     private BufferedReader bufferedReader;
@@ -8,7 +8,7 @@ public class Client implements Runnable {
     private BufferedWriter bufferedWriter;
     private String username;
     private int numbers;
-
+//Complete the socket, reading, sending, and counting.
     public Client(Socket socket) throws IOException {
         this.socket = socket;
         this.bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
@@ -16,9 +16,8 @@ public class Client implements Runnable {
         this.bufferedWriter = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
         this.numbers = -1;
     }
-
+//Mainly send messages and determine if the client is closing.
     public void sendMessages() {
-
             String messageToSend;
             while (socket.isConnected()) {
                 try {
@@ -41,7 +40,7 @@ public class Client implements Runnable {
             }
 
     }
-
+//Independent thread for receiving messages.
     public void run() {
         try {
             String messageReceived;
@@ -67,14 +66,14 @@ public class Client implements Runnable {
             }
         }
     }
-
+//Program used to close the client.
     public void close() throws IOException {
         bufferedReaderFromTerminal.close();
         bufferedWriter.close();
         bufferedReader.close();
         socket.close();
     }
-
+//Starting point of the program for opening the socket and starting the threads.
     public static void main(String[] args) {
         try {
             Socket socket = new Socket("localhost", 1004);
